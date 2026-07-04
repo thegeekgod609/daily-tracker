@@ -99,6 +99,40 @@
   /* DRIVE STATUS */
   .drive-status { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: center; margin-top: 6px; width: 100%; }
 
+  /* ── MONTHLY BILLS — card grid design ── */
+  .bills-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  .bills-month { font-family: var(--mono); font-size: 10px; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; }
+  /* radial meter */
+  .bills-meter { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .bills-meter-wrap { position: relative; width: 110px; height: 110px; }
+  .bills-meter-wrap svg { transform: rotate(-90deg); }
+  .bills-meter-bg  { fill: none; stroke: var(--bg3); stroke-width: 8; }
+  .bills-meter-fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s cubic-bezier(.4,0,.2,1); }
+  .bills-meter-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+  .bills-meter-pct  { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--green); line-height: 1; }
+  .bills-meter-sub  { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
+  .bills-status-msg { font-family: var(--mono); font-size: 11px; color: var(--text3); text-align: center; min-height: 16px; transition: color 0.3s; }
+  .bills-status-msg.done { color: var(--green); }
+  /* group label */
+  .bill-group { margin-bottom: 14px; }
+  .bill-group-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; padding-left: 2px; }
+  /* tiles */
+  .bill-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 7px; }
+  .bill-tile { position: relative; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s; user-select: none; overflow: hidden; }
+  .bill-tile:hover { border-color: #3A4258; transform: translateY(-1px); }
+  .bill-tile.paid { background: rgba(74,232,160,0.07); border-color: rgba(74,232,160,0.35); }
+  .bill-tile.paid:hover { border-color: rgba(74,232,160,0.55); }
+  .bill-tile-icon { font-size: 18px; margin-bottom: 7px; display: block; line-height: 1; }
+  .bill-tile-name { font-size: 12px; font-weight: 500; color: var(--text2); line-height: 1.3; transition: color 0.15s; }
+  .bill-tile.paid .bill-tile-name { color: var(--text3); }
+  .bill-tile-tag { display: inline-block; font-family: var(--mono); font-size: 9px; color: var(--text3); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-top: 5px; letter-spacing: 0.04em; }
+  .bill-tile.paid .bill-tile-tag { background: rgba(74,232,160,0.08); border-color: rgba(74,232,160,0.2); color: rgba(74,232,160,0.6); }
+  /* checkmark overlay */
+  .bill-tile-check { position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .bill-tile.paid .bill-tile-check { background: var(--green); border-color: var(--green); }
+  .bill-tile-check::after { content: ''; display: block; width: 0; height: 0; }
+  .bill-tile.paid .bill-tile-check::after { content: '✓'; font-size: 10px; color: var(--bg); font-weight: 700; line-height: 1; }
+
   @media (max-width: 520px) {
     .exp-row { grid-template-columns: 1fr 80px 32px; }
     .exp-row select { display: none; }
@@ -135,6 +169,49 @@
 </header>
 
 <div class="container">
+
+  <!-- ── MONTHLY BILLS ────────────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-title">Monthly Bills</span>
+      <span class="sec-sub">your wallet's recurring nightmare</span>
+    </div>
+    <div class="bills-header">
+      <div class="bills-month" id="util-month-badge"></div>
+    </div>
+
+    <!-- radial damage meter -->
+    <div class="bills-meter">
+      <div class="bills-meter-wrap">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle class="bills-meter-bg"   cx="55" cy="55" r="46"/>
+          <circle class="bills-meter-fill" id="bills-ring" cx="55" cy="55" r="46"
+                  stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+        </svg>
+        <div class="bills-meter-label">
+          <span class="bills-meter-pct" id="bills-pct">0%</span>
+          <span class="bills-meter-sub" id="bills-fraction">0 / 14</span>
+        </div>
+      </div>
+      <div class="bills-status-msg" id="bills-msg">tap a tile to mark paid</div>
+    </div>
+
+    <!-- group: Housing -->
+    <div class="bill-group">
+      <div class="bill-group-label">🏠 Housing</div>
+      <div class="bill-tiles" id="bg-housing"></div>
+    </div>
+    <!-- group: Utilities -->
+    <div class="bill-group">
+      <div class="bill-group-label">⚡ Utilities</div>
+      <div class="bill-tiles" id="bg-utilities"></div>
+    </div>
+    <!-- group: Investments -->
+    <div class="bill-group" style="margin-bottom:0">
+      <div class="bill-group-label">📈 Investments & Payments</div>
+      <div class="bill-tiles" id="bg-invest"></div>
+    </div>
+  </div>
 
   <div class="section">
     <div class="sec-head"><span class="sec-title">Work</span><span class="sec-sub">the thing paying for all of this</span></div>
@@ -173,6 +250,10 @@
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Cleaned mirrors</label>
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Cleaned washbasin</label>
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Filled water bottle</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>DMart Grocery Haul</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Iron Clothes</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Mandir Cleaned</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Washed Activa</label>
     </div>
   </div>
 
@@ -551,6 +632,132 @@ async function uploadToDrive() {
     btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg> save to drive`;
   }
 }
+
+// ─── MONTHLY BILLS — card grid ───────────────────────────────────────────────
+// localStorage key: util_YYYY-MM  →  auto-resets each month, never touches JSON.
+
+const UTIL_KEY = () => {
+  const d = new Date();
+  return `util_${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}`;
+};
+
+// Bills organised by group: { id, name, icon, tag, group }
+const DEFAULT_BILLS = [
+  // Housing
+  { id:  1, name: 'Home Loan EMI',         icon: '🏦', tag: 'mumbai',    group: 'housing', paid: false },
+  { id:  2, name: 'Rent',                  icon: '🔑', tag: 'blr',       group: 'housing', paid: false },
+  // Utilities
+  { id:  3, name: 'Kalyan Electricity',    icon: '💡', tag: 'kalyan',    group: 'utilities', paid: false },
+  { id:  4, name: 'Andheri Electricity',   icon: '💡', tag: 'andheri',   group: 'utilities', paid: false },
+  { id:  5, name: 'Bangalore Electricity', icon: '💡', tag: 'blr',       group: 'utilities', paid: false },
+  { id:  6, name: 'Andheri Gas',           icon: '🔥', tag: 'andheri',   group: 'utilities', paid: false },
+  { id:  7, name: 'Kalyan Gas',            icon: '🔥', tag: 'kalyan',    group: 'utilities', paid: false },
+  { id:  8, name: 'Bangalore Maintenance', icon: '🏢', tag: 'blr',       group: 'utilities', paid: false },
+  { id:  9, name: 'Kalyan Maintenance',    icon: '🏢', tag: 'kalyan',    group: 'utilities', paid: false },
+  { id: 10, name: 'Bangalore Maid',        icon: '🧹', tag: 'blr',       group: 'utilities', paid: false },
+  { id: 11, name: 'Airtel Bill',           icon: '📶', tag: 'all cities',group: 'utilities', paid: false },
+  // Investments & payments
+  { id: 12, name: 'HDFC Credit Card',      icon: '💳', tag: 'hdfc',      group: 'invest', paid: false },
+  { id: 13, name: 'SIP transfer Axis',     icon: '📈', tag: 'axis',      group: 'invest', paid: false },
+  { id: 14, name: 'SIP transfer HDFC',     icon: '📈', tag: 'hdfc',      group: 'invest', paid: false },
+];
+
+const STATUS_MSGS = [
+  [0,   0,   'tap a tile to mark paid'],
+  [1,   3,   'a promising start. your bank account is cautiously optimistic.'],
+  [4,   6,   'okay, momentum! the bills are scared.'],
+  [7,   9,   'more than halfway. you\'re basically a CFP at this point.'],
+  [10,  12,  'almost there. the finish line is within EMI range.'],
+  [13,  13,  'one more. don\'t let it be the maid.'],
+  [14,  14,  '🎉 all 14 paid. treat yourself — you\'ve clearly earned it.'],
+];
+
+let utilBills = [];
+
+function loadUtils() {
+  const saved = localStorage.getItem(UTIL_KEY());
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      // Merge saved paid-state back onto DEFAULT_BILLS (preserves new bills added to defaults)
+      utilBills = DEFAULT_BILLS.map(def => {
+        const match = parsed.find(p => p.id === def.id);
+        return match ? { ...def, paid: match.paid } : { ...def };
+      });
+    } catch(_) { utilBills = DEFAULT_BILLS.map(b => ({...b})); }
+  } else {
+    utilBills = DEFAULT_BILLS.map(b => ({...b}));
+  }
+  const d = new Date();
+  $('util-month-badge').textContent =
+    d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  renderBills();
+}
+
+function saveUtils() {
+  localStorage.setItem(UTIL_KEY(), JSON.stringify(utilBills.map(b => ({ id: b.id, paid: b.paid }))));
+}
+
+function toggleBill(id) {
+  const bill = utilBills.find(b => b.id === id);
+  if (!bill) return;
+  bill.paid = !bill.paid;
+  saveUtils();
+  // just update the tile and meter, no full re-render flicker
+  const tile = document.querySelector(`.bill-tile[data-id="${id}"]`);
+  if (tile) tile.classList.toggle('paid', bill.paid);
+  updateBillsMeter();
+}
+
+function renderBills() {
+  const groups = { housing: 'bg-housing', utilities: 'bg-utilities', invest: 'bg-invest' };
+  Object.entries(groups).forEach(([grp, containerId]) => {
+    const container = $(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    utilBills.filter(b => b.group === grp).forEach(bill => {
+      const tile = document.createElement('div');
+      tile.className = 'bill-tile' + (bill.paid ? ' paid' : '');
+      tile.dataset.id = bill.id;
+      tile.setAttribute('title', bill.paid ? 'Click to mark unpaid' : 'Click to mark paid');
+      tile.innerHTML = `
+        <div class="bill-tile-check"></div>
+        <span class="bill-tile-icon">${bill.icon}</span>
+        <div class="bill-tile-name">${bill.name}</div>
+        <span class="bill-tile-tag">${bill.tag}</span>`;
+      tile.addEventListener('click', () => toggleBill(bill.id));
+      container.appendChild(tile);
+    });
+  });
+  updateBillsMeter();
+}
+
+function updateBillsMeter() {
+  const paid  = utilBills.filter(b => b.paid).length;
+  const total = utilBills.length;
+  const pct   = total ? Math.round((paid / total) * 100) : 0;
+  const circ  = 289.03;
+
+  $('bills-ring').style.strokeDashoffset = circ - (pct / 100) * circ;
+  $('bills-pct').textContent      = pct + '%';
+  $('bills-fraction').textContent = `${paid} / ${total}`;
+
+  // colour shift: green → amber at 100%
+  $('bills-ring').style.stroke = paid === total && total > 0 ? 'var(--amber)' : 'var(--green)';
+
+  const msgEl = $('bills-msg');
+  const entry = STATUS_MSGS.find(([lo, hi]) => paid >= lo && paid <= hi);
+  msgEl.textContent = entry ? entry[2] : '';
+  msgEl.className   = 'bills-status-msg' + (paid === total && total > 0 ? ' done' : '');
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Initialise on load
+loadUtils();
+// ─────────────────────────────────────────────────────────────────────────────
 
 // TOAST
 function showToast(msg, type='info') {
