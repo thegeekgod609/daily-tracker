@@ -186,7 +186,7 @@
         <svg width="110" height="110" viewBox="0 0 110 110">
           <circle class="bills-meter-bg"   cx="55" cy="55" r="46"/>
           <circle class="bills-meter-fill" id="bills-ring" cx="55" cy="55" r="46"
-                  stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+                  stroke="var(--green)" stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
         </svg>
         <div class="bills-meter-label">
           <span class="bills-meter-pct" id="bills-pct">0%</span>
@@ -737,13 +737,12 @@ function updateBillsMeter() {
   const total = utilBills.length;
   const pct   = total ? Math.round((paid / total) * 100) : 0;
   const circ  = 289.03;
+  const ring  = $('bills-ring');
 
-  $('bills-ring').style.strokeDashoffset = circ - (pct / 100) * circ;
+  ring.setAttribute('stroke-dashoffset', circ - (pct / 100) * circ);
+  ring.setAttribute('stroke', paid === total && total > 0 ? 'var(--amber)' : 'var(--green)');
   $('bills-pct').textContent      = pct + '%';
   $('bills-fraction').textContent = `${paid} / ${total}`;
-
-  // colour shift: green → amber at 100%
-  $('bills-ring').style.stroke = paid === total && total > 0 ? 'var(--amber)' : 'var(--green)';
 
   const msgEl = $('bills-msg');
   const entry = STATUS_MSGS.find(([lo, hi]) => paid >= lo && paid <= hi);
@@ -755,8 +754,8 @@ function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Initialise on load
-loadUtils();
+// Initialise on load — wrapped in DOMContentLoaded so it survives any script position
+document.addEventListener('DOMContentLoaded', loadUtils);
 // ─────────────────────────────────────────────────────────────────────────────
 
 // TOAST
