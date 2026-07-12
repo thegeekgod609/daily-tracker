@@ -76,7 +76,14 @@
   .total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
   .total-lbl { font-family: var(--mono); font-size: 11px; color: var(--text3); }
   .total-amt { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--amber); }
+  .total-amt.green { color: var(--green); }
   .sec-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .subsec-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin: 4px 0 10px; }
+  .net-row { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; margin-top: 14px; border-top: 1px dashed var(--border); }
+  .net-lbl { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .net-amt { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+  .net-amt.pos { color: var(--green); }
+  .net-amt.neg { color: var(--red); }
 
   /* BOTTOM BAR */
   .dl-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 14px 24px; background: rgba(15,17,23,0.96); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
@@ -386,6 +393,31 @@
   </div>
 
   <div class="section">
+    <div class="sec-head"><span class="sec-title">Income</span><span class="sec-sub">money that occasionally shows up</span></div>
+    <div id="inc-list"></div>
+    <button class="add-exp-btn" onclick="addIncome()">+ add income</button>
+    <div class="total-row">
+      <span class="total-lbl">today's income</span>
+      <span class="total-amt green" id="inc-total">₹0</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head"><span class="sec-title">Investments</span><span class="sec-sub">money you pretend you didn't spend</span></div>
+    <div id="inv-list"></div>
+    <button class="add-exp-btn" onclick="addInvestment()">+ add investment</button>
+    <div class="total-row">
+      <span class="total-lbl">today's investments</span>
+      <span class="total-amt" id="inv-total">₹0</span>
+    </div>
+
+    <div class="net-row">
+      <span class="net-lbl">net (income − expenses − investments)</span>
+      <span class="net-amt" id="net-total">₹0</span>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="sec-head"><span class="sec-title">End of day</span><span class="sec-sub">no judgment. brain dump freely.</span></div>
     <div class="field">
       <label class="lbl" for="eod-note">one thing off. one thing good. anything on your mind.</label>
@@ -410,7 +442,11 @@
 let mood = '';
 let stretch = '';
 let expenses = [];
-const CATS = ['food','self-care/grooming','emi','groceries','swiggy/blinkit','rent','utilities','maid','maintenance','petrol','travel','air tickets','shopping','health','subscriptions','gift','social','other'];
+let incomes = [];
+let investments = [];
+const CATS = ['food','groceries','swiggy/blinkit','rent','utilities','maid','maintenance','petrol','travel','air tickets','shopping','health','subscriptions','gift','social','other'];
+const INCOME_CATS = ['salary','bonus','bank interest'];
+const INVEST_CATS = ['SIP','liquid funds','lumpsum'];
 
 const $ = id => document.getElementById(id);
 const val = id => ($( id)?.value||'').trim();
@@ -481,6 +517,7 @@ function updateExp(id, field, v) {
 function updateTotal() {
   const t = expenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
   $('exp-total').textContent = '₹'+Math.round(t).toLocaleString('en-IN');
+  updateNet();
 }
 function renderExpenses() {
   const list = $('exp-list');
@@ -496,6 +533,90 @@ function renderExpenses() {
     list.appendChild(row);
   });
   updateTotal();
+}
+
+// INCOME
+function addIncome() {
+  const id = Date.now();
+  incomes.push({id, desc:'', amount:'', cat:'salary'});
+  renderIncomes();
+}
+function removeIncome(id) {
+  incomes = incomes.filter(e => e.id !== id);
+  renderIncomes();
+}
+function updateInc(id, field, v) {
+  const e = incomes.find(x => x.id === id);
+  if (e) e[field] = v;
+  updateIncomeTotal();
+}
+function updateIncomeTotal() {
+  const t = incomes.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  $('inc-total').textContent = '₹'+Math.round(t).toLocaleString('en-IN');
+  updateNet();
+}
+function renderIncomes() {
+  const list = $('inc-list');
+  list.innerHTML = '';
+  incomes.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'exp-row';
+    row.innerHTML = `
+      <input type="text" placeholder="what was it?" value="${e.desc}" oninput="updateInc(${e.id},'desc',this.value)">
+      <input type="number" placeholder="₹ amount" value="${e.amount}" min="0" step="1" oninput="updateInc(${e.id},'amount',this.value)">
+      <select onchange="updateInc(${e.id},'cat',this.value)">${INCOME_CATS.map(c=>`<option value="${c}" ${e.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+      <button class="del-btn" onclick="removeIncome(${e.id})">×</button>`;
+    list.appendChild(row);
+  });
+  updateIncomeTotal();
+}
+
+// INVESTMENTS
+function addInvestment() {
+  const id = Date.now();
+  investments.push({id, desc:'', amount:'', cat:'SIP'});
+  renderInvestments();
+}
+function removeInvestment(id) {
+  investments = investments.filter(e => e.id !== id);
+  renderInvestments();
+}
+function updateInv(id, field, v) {
+  const e = investments.find(x => x.id === id);
+  if (e) e[field] = v;
+  updateInvestmentTotal();
+}
+function updateInvestmentTotal() {
+  const t = investments.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  $('inv-total').textContent = '₹'+Math.round(t).toLocaleString('en-IN');
+  updateNet();
+}
+function renderInvestments() {
+  const list = $('inv-list');
+  list.innerHTML = '';
+  investments.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'exp-row';
+    row.innerHTML = `
+      <input type="text" placeholder="what was it?" value="${e.desc}" oninput="updateInv(${e.id},'desc',this.value)">
+      <input type="number" placeholder="₹ amount" value="${e.amount}" min="0" step="1" oninput="updateInv(${e.id},'amount',this.value)">
+      <select onchange="updateInv(${e.id},'cat',this.value)">${INVEST_CATS.map(c=>`<option value="${c}" ${e.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+      <button class="del-btn" onclick="removeInvestment(${e.id})">×</button>`;
+    list.appendChild(row);
+  });
+  updateInvestmentTotal();
+}
+
+// NET = income - expenses - investments
+function updateNet() {
+  const netEl = $('net-total');
+  if (!netEl) return;
+  const incT = incomes.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  const expT = expenses.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  const invT = investments.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  const net = incT - expT - invT;
+  netEl.textContent = (net < 0 ? '−' : '') + '₹' + Math.round(Math.abs(net)).toLocaleString('en-IN');
+  netEl.className = 'net-amt ' + (net >= 0 ? 'pos' : 'neg');
 }
 
 // MARKDOWN
@@ -520,6 +641,8 @@ function buildJSON() {
     .map(i => i.textContent.trim());
 
   const expTotal = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const incomeTotal = incomes.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const investTotal = investments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
 
   return {
     date: todayISO(),
@@ -565,6 +688,19 @@ function buildJSON() {
       category: e.cat
     })),
     expenses_total: Math.round(expTotal * 100) / 100,
+    income: incomes.map(e => ({
+      item: e.desc || null,
+      amount: parseFloat(e.amount) || 0,
+      category: e.cat
+    })),
+    income_total: Math.round(incomeTotal * 100) / 100,
+    investments: investments.map(e => ({
+      item: e.desc || null,
+      amount: parseFloat(e.amount) || 0,
+      category: e.cat
+    })),
+    investments_total: Math.round(investTotal * 100) / 100,
+    net_total: Math.round((incomeTotal - expTotal - investTotal) * 100) / 100,
     eod_note: val('eod-note') || null
   };
 }
