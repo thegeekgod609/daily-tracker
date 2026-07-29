@@ -140,6 +140,36 @@
   .bill-tile-check::after { content: ''; display: block; width: 0; height: 0; }
   .bill-tile.paid .bill-tile-check::after { content: '✓'; font-size: 10px; color: var(--bg); font-weight: 700; line-height: 1; }
 
+  /* EFFORT SLIDER */
+  .slider-wrap { display: flex; align-items: center; gap: 14px; }
+  input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 5px; border-radius: 3px; background: var(--bg3); outline: none; border: 1px solid var(--border); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--amber); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--amber); transition: transform 0.15s; }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--amber); cursor: pointer; border: 2px solid var(--bg); }
+  .slider-val { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); min-width: 42px; text-align: right; }
+
+  /* WORKOUT TYPE + DYNAMIC FIELDS */
+  .workout-subfields { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .muscle-chip { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text2); cursor: pointer; padding: 6px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); transition: all 0.15s; user-select: none; }
+  .muscle-chip:hover { border-color: var(--amber); }
+  .muscle-chip.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+  .muscle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 6px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+
+  /* BOOK TRACKER */
+  .book-tracker-top { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; flex-wrap: wrap; }
+  .book-meter-wrap { position: relative; width: 78px; height: 78px; flex-shrink: 0; }
+  .book-meter-wrap svg { transform: rotate(-90deg); }
+  .book-meter-bg { fill: none; stroke: var(--bg3); stroke-width: 7; }
+  .book-meter-fill { fill: none; stroke: var(--amber); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 0.5s cubic-bezier(.4,0,.2,1); }
+  .book-meter-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .book-meter-count { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--amber); line-height: 1; }
+  .book-meter-goal { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; }
+  .book-status { flex: 1; min-width: 180px; font-size: 13px; color: var(--text2); }
+  .book-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .book-row { display: grid; grid-template-columns: 1fr 32px; gap: 8px; }
+  .book-row input { font-size: 13px; padding: 7px 10px; }
+
   @media (max-width: 520px) {
     .exp-row { grid-template-columns: 1fr 80px 32px; }
     .exp-row select { display: none; }
@@ -220,6 +250,29 @@
     </div>
   </div>
 
+  <!-- ── BOOK TRACKER (yearly) ────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-title">Reading Tracker</span>
+      <span class="sec-sub">6 books a year, or bust</span>
+    </div>
+    <div class="book-tracker-top">
+      <div class="book-meter-wrap">
+        <svg width="78" height="78" viewBox="0 0 78 78">
+          <circle class="book-meter-bg" cx="39" cy="39" r="33"/>
+          <circle class="book-meter-fill" id="book-ring" cx="39" cy="39" r="33" stroke-dasharray="207.35" stroke-dashoffset="207.35"/>
+        </svg>
+        <div class="book-meter-label">
+          <span class="book-meter-count" id="book-count">0/6</span>
+          <span class="book-meter-goal" id="book-year-badge"></span>
+        </div>
+      </div>
+      <div class="book-status" id="book-status">add a book once you finish it — this resets every new year.</div>
+    </div>
+    <div class="book-list" id="book-list"></div>
+    <button class="add-exp-btn" onclick="addBook()">+ add book finished</button>
+  </div>
+
   <div class="section">
     <div class="sec-head"><span class="sec-title">Work</span><span class="sec-sub">the thing paying for all of this</span></div>
     <div class="field">
@@ -227,13 +280,16 @@
       <textarea id="work-done" placeholder="meetings, tasks shipped, PRs reviewed, that one ticket that refuses to die..." oninput="track()"></textarea>
     </div>
     <div class="field">
-      <label class="lbl" for="work-carry">carrying over to tomorrow (be honest)</label>
-      <textarea id="work-carry" placeholder="blockers, pending items, the thing you said you'd finish today..." style="min-height:48px;" oninput="track()"></textarea>
+      <label class="lbl">effort you put in today</label>
+      <div class="slider-wrap">
+        <input type="range" id="work-effort" min="0" max="100" step="5" value="50" oninput="updateEffort(this.value)">
+        <span class="slider-val" id="work-effort-val">50%</span>
+      </div>
     </div>
   </div>
 
   <div class="section">
-    <div class="sec-head"><span class="sec-title">Study</span><span class="sec-sub">future Akshita says thank you</span></div>
+    <div class="sec-head"><span class="sec-title">Study/Upskill</span><span class="sec-sub">future Akshita says thank you</span></div>
     <div class="field">
       <label class="lbl" for="study-done">what did you study today</label>
       <textarea id="study-done" placeholder="NISM, CFP, Open Banking, that YouTube rabbit hole that was sort of educational..." style="min-height:48px;" oninput="track()"></textarea>
@@ -261,6 +317,8 @@
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Iron Clothes</label>
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Mandir Cleaned</label>
       <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Washed Activa</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Clean Fans</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Decluttered Drawers</label>
     </div>
   </div>
 
@@ -344,17 +402,103 @@
     </div>
     <hr class="sec-divider">
     <div class="field">
-      <label class="lbl" style="margin-bottom:10px;">stretching</label>
-      <div class="mood-strip" id="stretch-btns">
-        <button class="mood-btn" onclick="setStretch(this,'morning')">🌅 morning</button>
-        <button class="mood-btn" onclick="setStretch(this,'night')">🌙 night</button>
-        <button class="mood-btn" onclick="setStretch(this,'both')">✌️ both</button>
-        <button class="mood-btn" onclick="setStretch(this,'none')">— none</button>
+      <label class="lbl" style="margin-bottom:10px;">clean eating (self-restraint checkpoint)</label>
+      <div class="checks" id="clean-eating-checks">
+        <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>No sugar</label>
+        <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>No highly processed food</label>
       </div>
     </div>
+    <hr class="sec-divider">
     <div class="field">
-      <label class="lbl" for="health-notes">workout notes</label>
-      <textarea id="health-notes" placeholder="ran 5K, strength session, rest day, heel acting up again..." style="min-height:48px;" oninput="track()"></textarea>
+      <label class="lbl" style="margin-bottom:10px;">workout log</label>
+      <div class="mood-strip" id="workout-type-btns">
+        <button class="mood-btn" onclick="setWorkoutType(this,'gym')">🏋️ gym</button>
+        <button class="mood-btn" onclick="setWorkoutType(this,'badminton')">🏸 badminton</button>
+        <button class="mood-btn" onclick="setWorkoutType(this,'running')">🏃 running</button>
+        <button class="mood-btn" onclick="setWorkoutType(this,'other')">🎯 other sport</button>
+        <button class="mood-btn" onclick="setWorkoutType(this,'mobility')">🧘 mobility</button>
+        <button class="mood-btn" onclick="setWorkoutType(this,'rest')">😴 rest day</button>
+      </div>
+
+      <div class="workout-subfields" id="workout-fields-gym" style="display:none;">
+        <div class="field">
+          <label class="lbl">duration</label>
+          <div class="inline"><input type="number" id="workout-gym-duration" min="0" placeholder="0" oninput="track()"><span class="unit">minutes</span></div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label class="lbl" style="margin-bottom:8px;">muscle group(s) trained</label>
+          <div class="muscle-grid" id="muscle-group-chips">
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Chest</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Back</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Shoulders</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Arms</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Legs</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Core</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Full body</div>
+            <div class="muscle-chip" onclick="toggleMuscle(this)">Cardio</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-subfields" id="workout-fields-badminton" style="display:none;">
+        <div class="field" style="margin-bottom:0;">
+          <label class="lbl">duration</label>
+          <div class="inline"><input type="number" id="workout-badminton-duration" min="0" placeholder="0" oninput="track()"><span class="unit">minutes</span></div>
+        </div>
+      </div>
+
+      <div class="workout-subfields" id="workout-fields-running" style="display:none;">
+        <div class="field-row">
+          <div class="field">
+            <label class="lbl">duration</label>
+            <div class="inline"><input type="number" id="workout-run-duration" min="0" placeholder="0" oninput="track()"><span class="unit">min</span></div>
+          </div>
+          <div class="field">
+            <label class="lbl">pace</label>
+            <div class="inline"><input type="text" id="workout-run-pace" placeholder="6:30" oninput="track()"><span class="unit">min/km</span></div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label class="lbl">avg heart rate</label>
+            <div class="inline"><input type="number" id="workout-run-hr" min="0" placeholder="0" oninput="track()"><span class="unit">bpm</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-subfields" id="workout-fields-other" style="display:none;">
+        <div class="field-row">
+          <div class="field">
+            <label class="lbl">sport</label>
+            <input type="text" id="workout-other-name" placeholder="swimming, cycling, trekking..." oninput="track()">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label class="lbl">duration</label>
+            <div class="inline"><input type="number" id="workout-other-duration" min="0" placeholder="0" oninput="track()"><span class="unit">min</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="workout-subfields" id="workout-fields-mobility" style="display:none;">
+        <div class="field" style="margin-bottom:0;">
+          <label class="lbl">what did you work on</label>
+          <textarea id="mobility-notes" placeholder="hip openers, ankle circles, foam rolling, thoracic rotations..." style="min-height:44px;" oninput="track()"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head"><span class="sec-title">Grooming/Skincare</span><span class="sec-sub">maintenance mode, human edition</span></div>
+    <div class="checks" id="grooming-checks">
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Sunscreen</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Moisturiser</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Face mask</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Whitehead removal</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Face wax</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Legs wax</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Hand wax</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Haircut</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Hair straightening</label>
+      <label class="chk-item" onclick="toggleChk(this)"><input type="checkbox"><span class="chk-box"></span>Hair colouring</label>
     </div>
   </div>
 
@@ -371,39 +515,29 @@
   </div>
 
   <div class="section">
-    <div class="sec-head"><span class="sec-title">Experience</span><span class="sec-sub">same day every day is how years disappear</span></div>
-    <div class="field">
-      <label class="lbl" for="exp-diff">what did you do differently today</label>
-      <textarea id="exp-diff" placeholder="tried a new route, cooked something new, said no to something..." oninput="track()"></textarea>
-    </div>
-    <div class="field">
-      <label class="lbl" for="exp-remember">one thing you want to remember</label>
-      <textarea id="exp-remember" placeholder="a thought, a moment, something someone said, a small win..." style="min-height:48px;" oninput="track()"></textarea>
-    </div>
-  </div>
+    <div class="sec-head"><span class="sec-title">Finance</span><span class="sec-sub">where it came from, where it went, where it's growing</span></div>
 
-  <div class="section">
-    <div class="sec-head"><span class="sec-title">Expenses</span><span class="sec-sub">Bangalore edition — where ₹500 just vanishes</span></div>
+    <div class="subsec-title">💸 Expenses — Bangalore edition, where ₹500 just vanishes</div>
     <div id="exp-list"></div>
     <button class="add-exp-btn" onclick="addExpense()">+ add expense</button>
     <div class="total-row">
       <span class="total-lbl">today's total</span>
       <span class="total-amt" id="exp-total">₹0</span>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="sec-head"><span class="sec-title">Income</span><span class="sec-sub">money that occasionally shows up</span></div>
+    <hr class="sec-divider">
+
+    <div class="subsec-title">💰 Income — money that occasionally shows up</div>
     <div id="inc-list"></div>
     <button class="add-exp-btn" onclick="addIncome()">+ add income</button>
     <div class="total-row">
       <span class="total-lbl">today's income</span>
       <span class="total-amt green" id="inc-total">₹0</span>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="sec-head"><span class="sec-title">Investments</span><span class="sec-sub">money you pretend you didn't spend</span></div>
+    <hr class="sec-divider">
+
+    <div class="subsec-title">📈 Investments — money you pretend you didn't spend</div>
     <div id="inv-list"></div>
     <button class="add-exp-btn" onclick="addInvestment()">+ add investment</button>
     <div class="total-row">
@@ -440,10 +574,12 @@
 
 <script>
 let mood = '';
-let stretch = '';
+let workoutType = '';
+let muscleGroups = [];
 let expenses = [];
 let incomes = [];
 let investments = [];
+let books = [];
 const CATS = ['food','groceries','swiggy/blinkit','rent','utilities','maid','maintenance','petrol','travel','air tickets','shopping','health','subscriptions','gift','social','other'];
 const INCOME_CATS = ['salary','bonus','bank interest'];
 const INVEST_CATS = ['SIP','liquid funds','lumpsum'];
@@ -471,11 +607,28 @@ function setMood(btn, m) {
   track();
 }
 
-// STRETCHING
-function setStretch(btn, s) {
-  document.querySelectorAll('#stretch-btns .mood-btn').forEach(b => b.classList.remove('active'));
+// EFFORT SLIDER
+function updateEffort(v) {
+  $('work-effort-val').textContent = v + '%';
+  track();
+}
+
+// WORKOUT TYPE
+function setWorkoutType(btn, type) {
+  document.querySelectorAll('#workout-type-btns .mood-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  stretch = s;
+  workoutType = type;
+  ['gym','badminton','running','other','mobility'].forEach(t => {
+    $('workout-fields-' + t).style.display = (t === type) ? 'block' : 'none';
+  });
+  track();
+}
+
+// MUSCLE GROUP CHIPS (multi-select)
+function toggleMuscle(chip) {
+  chip.classList.toggle('active');
+  muscleGroups = Array.from(document.querySelectorAll('#muscle-group-chips .muscle-chip.active')).map(c => c.textContent.trim());
+  track();
 }
 
 // CHECKBOXES
@@ -488,7 +641,7 @@ function toggleChk(label) {
 
 // PROGRESS RING
 function track() {
-  const fields = [val('work-done'), val('study-done'), val('food-breakfast')||val('food-lunch')||val('food-dinner'), val('health-sleep')||val('health-steps'), val('social-calls')||val('social-met'), val('exp-diff'), val('eod-note'), mood];
+  const fields = [val('work-done'), val('study-done'), val('food-breakfast')||val('food-lunch')||val('food-dinner'), val('health-sleep')||val('health-steps'), val('social-calls')||val('social-met'), val('eod-note'), mood];
   const chores = document.querySelectorAll('#chores-checks .chk-item.done').length;
   const rings = document.querySelectorAll('#health-checks .chk-item.done').length;
   let filled = fields.filter(Boolean).length + (chores>0?1:0) + (rings>0?1:0);
@@ -640,6 +793,37 @@ function buildJSON() {
     .filter(i => i.classList.contains('done'))
     .map(i => i.textContent.trim());
 
+  const cleanEatingItems = document.querySelectorAll('#clean-eating-checks .chk-item');
+  const cleanEating = {};
+  cleanEatingItems.forEach(item => {
+    const name = item.textContent.trim().toLowerCase().replace(/\s+/g, '_');
+    cleanEating[name] = item.classList.contains('done');
+  });
+
+  const groomingItems = document.querySelectorAll('#grooming-checks .chk-item');
+  const grooming = {};
+  groomingItems.forEach(item => {
+    const name = item.textContent.trim().toLowerCase().replace(/\s+/g, '_');
+    grooming[name] = item.classList.contains('done');
+  });
+
+  const workout = { type: workoutType || null };
+  if (workoutType === 'gym') {
+    workout.duration_min = val('workout-gym-duration') ? parseInt(val('workout-gym-duration')) : null;
+    workout.muscle_groups = muscleGroups;
+  } else if (workoutType === 'badminton') {
+    workout.duration_min = val('workout-badminton-duration') ? parseInt(val('workout-badminton-duration')) : null;
+  } else if (workoutType === 'running') {
+    workout.duration_min = val('workout-run-duration') ? parseInt(val('workout-run-duration')) : null;
+    workout.pace_min_per_km = val('workout-run-pace') || null;
+    workout.avg_heart_rate = val('workout-run-hr') ? parseInt(val('workout-run-hr')) : null;
+  } else if (workoutType === 'other') {
+    workout.sport = val('workout-other-name') || null;
+    workout.duration_min = val('workout-other-duration') ? parseInt(val('workout-other-duration')) : null;
+  } else if (workoutType === 'mobility') {
+    workout.notes = val('mobility-notes') || null;
+  }
+
   const expTotal = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
   const incomeTotal = incomes.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
   const investTotal = investments.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
@@ -649,7 +833,7 @@ function buildJSON() {
     mood: mood || null,
     work: {
       done: val('work-done') || null,
-      carryover: val('work-carry') || null
+      effort_pct: parseInt($('work-effort').value)
     },
     study: val('study-done') || null,
     chores: {
@@ -670,17 +854,20 @@ function buildJSON() {
       steps: val('health-steps') ? parseInt(val('health-steps')) : null,
       weight_kg: val('health-weight') ? parseFloat(val('health-weight')) : null,
       rings,
-      stretching: stretch || null,
       body_state: bodyState,
-      workout_notes: val('health-notes') || null
+      clean_eating: cleanEating,
+      workout,
+      grooming
     },
     social: {
       calls: val('social-calls') || null,
       met: val('social-met') || null
     },
-    experience: {
-      did_differently: val('exp-diff') || null,
-      remember: val('exp-remember') || null
+    reading_progress: {
+      year: new Date().getFullYear(),
+      goal: BOOK_GOAL,
+      books_finished: books.length,
+      books: books.map(b => b.title)
     },
     expenses: expenses.map(e => ({
       item: e.desc || null,
@@ -810,28 +997,59 @@ const STATUS_MSGS = [
 
 let utilBills = [];
 
-function loadUtils() {
-  const saved = localStorage.getItem(UTIL_KEY());
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      // Merge saved paid-state back onto DEFAULT_BILLS (preserves new bills added to defaults)
-      utilBills = DEFAULT_BILLS.map(def => {
-        const match = parsed.find(p => p.id === def.id);
-        return match ? { ...def, paid: match.paid } : { ...def };
-      });
-    } catch(_) { utilBills = DEFAULT_BILLS.map(b => ({...b})); }
-  } else {
-    utilBills = DEFAULT_BILLS.map(b => ({...b}));
-  }
+// BUG FIX: bills used to live only in this browser's localStorage, so the same
+// data never showed up on another device. localStorage now works purely as an
+// instant local cache — the source of truth is the shared tracker_logs Drive
+// backend (same Apps Script deployment used for daily entries), fetched with
+// action=getBills and saved with action=saveBills. See the accompanying
+// Apps Script snippet for the doGet/doPost handlers this needs.
+async function loadUtils() {
   const d = new Date();
   $('util-month-badge').textContent =
     d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+  let remoteBills = null;
+  if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_DEPLOYMENT_URL_HERE') {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getBills&month=${UTIL_KEY()}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.bills)) remoteBills = data.bills;
+    } catch (_) {
+      // offline or script not updated yet — silently fall back to local cache
+    }
+  }
+
+  let source = remoteBills;
+  if (!source) {
+    const cached = localStorage.getItem(UTIL_KEY());
+    if (cached) { try { source = JSON.parse(cached); } catch(_) { source = null; } }
+  }
+
+  utilBills = source
+    ? DEFAULT_BILLS.map(def => {
+        const match = source.find(p => p.id === def.id);
+        return match ? { ...def, paid: match.paid } : { ...def };
+      })
+    : DEFAULT_BILLS.map(b => ({...b}));
+
+  // keep the local cache warm so the UI is instant even before Drive responds next time
+  localStorage.setItem(UTIL_KEY(), JSON.stringify(utilBills.map(b => ({ id: b.id, paid: b.paid }))));
   renderBills();
 }
 
 function saveUtils() {
-  localStorage.setItem(UTIL_KEY(), JSON.stringify(utilBills.map(b => ({ id: b.id, paid: b.paid }))));
+  const payload = utilBills.map(b => ({ id: b.id, paid: b.paid }));
+  localStorage.setItem(UTIL_KEY(), JSON.stringify(payload));
+
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_DEPLOYMENT_URL_HERE') return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'saveBills', month: UTIL_KEY(), bills: payload })
+  }).catch(err => {
+    console.error('bills sync to Drive failed — change saved locally only:', err);
+    showToast('bills saved locally, sync failed', 'error');
+  });
 }
 
 function toggleBill(id) {
@@ -843,6 +1061,104 @@ function toggleBill(id) {
   const tile = document.querySelector(`.bill-tile[data-id="${id}"]`);
   if (tile) tile.classList.toggle('paid', bill.paid);
   updateBillsMeter();
+}
+
+// ─── BOOK TRACKER — resets every calendar year ──────────────────────────────
+const BOOK_GOAL = 6;
+const BOOK_KEY = () => `books_${new Date().getFullYear()}`;
+const BOOK_CIRC = 207.35;
+
+const BOOK_STATUS_MSGS = [
+  [0, 0, "haven't cracked one open yet this year — no shame, just start."],
+  [1, 1, "one down. the year is young and so is your TBR pile."],
+  [2, 2, "two books in. a pattern is forming, and it's a good one."],
+  [3, 3, "halfway to six. keep the streak alive."],
+  [4, 4, "four! you're basically a book club unto yourself."],
+  [5, 5, "five down, one to go. don't stop now."],
+  [6, Infinity, "🎉 goal hit. anything past this is a victory lap."],
+];
+
+async function loadBooks() {
+  $('book-year-badge').textContent = new Date().getFullYear();
+
+  let remoteBooks = null;
+  if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'PASTE_YOUR_DEPLOYMENT_URL_HERE') {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getBooks&year=${BOOK_KEY()}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.books)) remoteBooks = data.books;
+    } catch (_) {
+      // offline or script not updated yet — silently fall back to local cache
+    }
+  }
+
+  if (remoteBooks) {
+    books = remoteBooks;
+  } else {
+    const cached = localStorage.getItem(BOOK_KEY());
+    try { books = cached ? JSON.parse(cached) : []; } catch(_) { books = []; }
+  }
+
+  localStorage.setItem(BOOK_KEY(), JSON.stringify(books));
+  renderBooks();
+}
+
+function saveBooks() {
+  localStorage.setItem(BOOK_KEY(), JSON.stringify(books));
+
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_DEPLOYMENT_URL_HERE') return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'saveBooks', year: BOOK_KEY(), books })
+  }).catch(err => {
+    console.error('books sync to Drive failed — change saved locally only:', err);
+    showToast('book saved locally, sync failed', 'error');
+  });
+}
+
+function addBook() {
+  books.push({ id: Date.now(), title: '' });
+  saveBooks();
+  renderBooks();
+}
+
+function removeBook(id) {
+  books = books.filter(b => b.id !== id);
+  saveBooks();
+  renderBooks();
+}
+
+function updateBookTitle(id, title) {
+  const b = books.find(x => x.id === id);
+  if (b) b.title = title;
+  saveBooks();
+  updateBookMeter();
+}
+
+function renderBooks() {
+  const list = $('book-list');
+  list.innerHTML = '';
+  books.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'book-row';
+    row.innerHTML = `
+      <input type="text" placeholder="book title" value="${escHtml(b.title)}" oninput="updateBookTitle(${b.id}, this.value)">
+      <button class="del-btn" onclick="removeBook(${b.id})">×</button>`;
+    list.appendChild(row);
+  });
+  updateBookMeter();
+}
+
+function updateBookMeter() {
+  const count = books.length;
+  const pct = Math.min(1, count / BOOK_GOAL);
+  const ring = $('book-ring');
+  ring.setAttribute('stroke-dashoffset', BOOK_CIRC - pct * BOOK_CIRC);
+  ring.setAttribute('stroke', count >= BOOK_GOAL ? 'var(--green)' : 'var(--amber)');
+  $('book-count').textContent = `${count}/${BOOK_GOAL}`;
+  const entry = BOOK_STATUS_MSGS.find(([lo, hi]) => count >= lo && count <= hi);
+  $('book-status').textContent = entry ? entry[2] : '';
 }
 
 function renderBills() {
@@ -891,7 +1207,7 @@ function escHtml(str) {
 }
 
 // Initialise on load — wrapped in DOMContentLoaded so it survives any script position
-document.addEventListener('DOMContentLoaded', loadUtils);
+document.addEventListener('DOMContentLoaded', () => { loadUtils(); loadBooks(); });
 // ─────────────────────────────────────────────────────────────────────────────
 
 // TOAST
